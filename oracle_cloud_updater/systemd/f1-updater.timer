@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the F1 data updater hourly
+
+[Timer]
+# Every hour, on the hour. Persistent=true runs a missed job after downtime.
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

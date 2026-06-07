@@ -1,0 +1,5 @@
+# The updater reuses the app backend; install backend/requirements.txt too
+# (setup.sh does this). These are the extras this folder needs directly.
+python-dotenv>=1.0.0
+boto3>=1.34.0        # Oracle Object Storage is S3-compatible
+# fastf1, numpy, pandas, zstandard, Pillow, etc. come from ../backend/requirements.txt

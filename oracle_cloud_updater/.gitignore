@@ -1,0 +1,9 @@
+# Local runtime state — never commit
+.env
+.venv/
+_work/
+_fastf1cache/
+_data_repo/
+__pycache__/
+*.pyc
+*.log

@@ -1,0 +1,15 @@
+# Local runtime state — never commit
+.env
+.venv/
+_work/
+_fastf1cache/
+_data_repo/
+__pycache__/
+*.pyc
+*.log
+node_modules/
+dist/
+.DS_Store
+backend/__pycache__/
+oracle_cloud_updater/__pycache__/
+oracle_cloud_updater/_fastf1cache/
