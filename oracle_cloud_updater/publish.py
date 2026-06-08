@@ -236,9 +236,72 @@ class OracleObjectStoragePublisher(Publisher):
 
 
 # --------------------------------------------------------------------------- #
+# Local Directory                                                              #
+# --------------------------------------------------------------------------- #
+class LocalPublisher(Publisher):
+    name = "local"
+
+    def __init__(self) -> None:
+        self.clone_dir = os.path.abspath(os.environ.get("LOCAL_DATA_DIR", "./_data"))
+        self.entries: dict[tuple[int, int, str], dict] = {}
+        self._dirty = False
+
+    def prepare(self) -> None:
+        os.makedirs(self.clone_dir, exist_ok=True)
+        self._load_manifest()
+
+    def _load_manifest(self) -> None:
+        mpath = os.path.join(self.clone_dir, "MANIFEST.json")
+        self.entries = {}
+        if os.path.exists(mpath):
+            try:
+                for e in json.load(open(mpath, encoding="utf-8")).get("sessions", []):
+                    self.entries[(e["year"], e["round"], e["type"])] = e
+            except Exception as exc:
+                logger.warning("could not parse existing MANIFEST: %s", exc)
+
+    def has(self, year: int, rnd: int, stype: str) -> bool:
+        zip_rel = f"sessions/{year}/{rnd}/{stype}.zip"
+        return (year, rnd, stype) in self.entries or \
+            os.path.exists(os.path.join(self.clone_dir, zip_rel))
+
+    def put_session(self, year: int, rnd: int, stype: str, name: str, zip_bytes: bytes) -> None:
+        zip_rel = f"sessions/{year}/{rnd}/{stype}.zip"
+        dest = os.path.join(self.clone_dir, zip_rel)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, "wb") as fh:
+            fh.write(zip_bytes)
+        self.entries[(year, rnd, stype)] = {
+            "year": year, "round": rnd, "type": stype,
+            "name": name, "zip": zip_rel, "bytes": len(zip_bytes),
+        }
+        self._dirty = True
+
+    def put_schedule(self, year: int, gz_bytes: bytes) -> None:
+        dest = os.path.join(self.clone_dir, "seasons", str(year), "schedule.json")
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        old = open(dest, "rb").read() if os.path.exists(dest) else None
+        if old != gz_bytes:
+            with open(dest, "wb") as fh:
+                fh.write(gz_bytes)
+
+    def finalize(self, summary: str) -> None:
+        if not self._dirty:
+            return
+        mpath = os.path.join(self.clone_dir, "MANIFEST.json")
+        with open(mpath, "wb") as fh:
+            fh.write(_manifest_bytes(self.entries))
+        logger.info("[local] updated MANIFEST.json (%d sessions)", len(self.entries))
+
+
+# --------------------------------------------------------------------------- #
 def build_publishers() -> list[Publisher]:
     dests = [d.strip().lower() for d in os.environ.get("DEST", "github").split(",") if d.strip()]
-    factory = {"github": GithubPublisher, "oracle": OracleObjectStoragePublisher}
+    factory = {
+        "github": GithubPublisher,
+        "oracle": OracleObjectStoragePublisher,
+        "local": LocalPublisher
+    }
     pubs: list[Publisher] = []
     for d in dests:
         if d not in factory:

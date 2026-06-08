@@ -45,7 +45,7 @@ except Exception:
     pass
 
 # --- backend runtime config (must be set before importing services) -------- #
-WORK = os.path.join(HERE, "_work")
+WORK = os.environ.get("DATA_DIR", os.path.join(HERE, "_work"))
 os.environ["STORAGE_MODE"] = "local"
 os.environ["DATA_DIR"] = WORK
 os.environ["TELEMETRY_MODE"] = "eager"   # bake full telemetry into the zips
