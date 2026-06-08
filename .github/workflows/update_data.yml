@@ -26,10 +26,23 @@ jobs:
           pip install -r backend/requirements.txt
           pip install -r oracle_cloud_updater/requirements.txt
 
-      - name: Run Updater
+      - name: Run Updater (f1database-2024-now)
         env:
           DEST: github
           GITHUB_DATA_REPO: https://github.com/${{ github.repository_owner }}/f1database-2024-now.git
+          GITHUB_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          SEASONS: 2024,2025,2026
+          REFRESH_DAYS: 2
+          MAX_PER_RUN: 3
+          TELEMETRY_WORKERS: 4
+        run: |
+          python oracle_cloud_updater/updater.py
+
+      - name: Run Updater (telemetry_F1)
+        env:
+          DEST: github
+          GITHUB_DATA_REPO: https://github.com/${{ github.repository_owner }}/telemetry_F1.git
           GITHUB_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
           SEASONS: 2024,2025,2026
