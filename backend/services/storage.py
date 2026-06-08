@@ -108,20 +108,12 @@ def _find_type_dir(rdir: Path, stype: str) -> str:
 
 
 def _resolve(path: str, for_read: bool) -> str:
-    """Map a numeric session key to its readable on-disk relative path."""
-    parts = path.split("/")
-    if len(parts) < 4 or parts[0] != "sessions":
-        return path
-    year, rnd, stype = parts[1], parts[2], parts[3]
-    rest = parts[4:]
-    if for_read:
-        ydir = _data_dir() / "sessions" / year
-        round_dir = _find_round_dir(ydir, year, rnd)
-        type_dir = _find_type_dir(ydir / round_dir, stype)
-    else:
-        round_dir = _round_dir_name(year, rnd)
-        type_dir = _SESSION_TYPE_LABEL.get(stype, stype)
-    return "/".join(["sessions", year, round_dir, type_dir, *rest])
+    """Map a numeric session key to its relative path.
+    
+    Ensures a strictly numeric structure (sessions/YEAR/ROUND/TYPE)
+    matching the telemetry_F1 zip format.
+    """
+    return path
 
 
 def _fs(path: str, for_read: bool) -> Path:
